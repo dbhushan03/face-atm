@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face ATM</title>
+</head>
+<body>
+    <div class="center">
+        <input type="text" id="uniquename" name="uniquename" placeholder="Enter Unique Username">
+        <input type='file' onchange="readURL(this);" />
+<br />
+<br />
+
+<button id="toggleCanvasDisplay" onclick="toggleCanvas()">Hide canvas</button>  <button id="toggleDataUrl" onclick="toggleDataUrl()">Hide dataUrl</button>
+
+<br/>
+<br/>
+<textarea id="dataUrl" rows="4" cols="100">
+</textarea>
+ 
+<br/>
+<canvas id="myCanvas"></canvas>
+        <button type="button" onclick="adduser();"> Submit</button>
+        
+       
+    </div>
+
+
+
+    <script>
+let toSend = {};
+
+function readURL(input) {
+  if (input.files && input.files[0]) {
+    var reader = new FileReader();
+
+    reader.addEventListener(
+      "load",
+      function() {
+        var avatarImg = new Image();
+        var src = reader.result;
+        avatarImg.src = src;
+        toSend.image = src;
+        document.getElementById("dataUrl").innerText = src;
+
+        avatarImg.onload = function() {
+          var c = document.getElementById("myCanvas");
+          var ctx = c.getContext("2d");
+          ctx.canvas.width = avatarImg.width;
+          ctx.canvas.height = avatarImg.height;
+          
+          ctx.drawImage(avatarImg, 0, 0);
+        };
+      },
+      false
+    );
+
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+function toggleCanvas() {
+  var canvas = document.getElementById("myCanvas");
+  if(canvas.style.display == "none"){
+    canvas.style.display = "block";
+    document.getElementById("toggleCanvasDisplay").innerText = "Hide canvas";
+  }
+  else {
+    canvas.style.display = "none";
+    document.getElementById("toggleCanvasDisplay").innerText = "Show canvas";
+  }
+}
+
+function toggleDataUrl() {
+  var area = document.getElementById("dataUrl");
+  if(area.style.display == "none"){
+    area.style.display = "block";
+    document.getElementById("toggleDataUrl").innerText = "Hide data url";
+  }
+  else {
+    area.style.display = "none";
+    document.getElementById("toggleDataUrl").innerText = "Show data url";
+  }
+}
+
+        async function adduser(){
+
+            toSend.uniquename = document.getElementById("uniquename").value;
+            console.log(toSend);
+            const response = await fetch("http://localhost:3000/adduser", {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(toSend) // body data type must match "Content-Type" header
+  });
+  console.log(response.json());
+
+        }
+
+      
+    </script>
+</body>
+</html

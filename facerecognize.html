@@ -1,0 +1,159 @@
+<html>
+    <head>
+        <title>Face ATM</title>
+        <style>
+        #overlay, .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            }
+            #refimg, #reflay{
+                display: none
+            }
+          
+            .log{
+        margin: auto;
+  width: 60%;
+  border: 3px solid #73AD21;
+  padding: 10px;
+    }
+
+
+         
+        </style>
+    </head>
+    <body>
+        <img  id="refimg" />
+        <div class="log">
+<span id="log1"></span><br>
+<span id="log2"></span><br>
+<span id="log3"></span><br>
+<span id="log4"></span><br>
+<span id="log5"></span><br>
+<span id="log6"></span><br>
+<span id="log7"></span><br>
+<span id="log8"></span><br>
+<span id="log9"></span><br>
+<span id="log10"></span><br>
+        </div>
+       <canvas id="reflay" class="overlay"></canvas>
+
+        <script src="js/jquery-2.1.1.min.js"></script>
+        <script src="js/face-api.js"></script>
+        <script>
+            let userList=[]; 
+            await fetch("https://list.face-atm.workers.dev/")
+  .then(response => response.json())
+  .then(data => userList = data );
+            $(document).ready(function(){
+                
+                async function face(){
+                    
+                    var arrLog = ["Starting Authentication","Loading Models","Loading SsdMobilenetv1Model","Loading FaceLandmarkModel","Loading FaceRecognitionModel","Getting Facial Image","Getting Face Descriptions","Matching Dimesions","Matching faces","Getting Results"];
+                    var log1 = document.getElementById('log1');
+                    log1.textContent = arrLog[0];
+                    console.log("Starting Authentication");
+                    
+                    const MODEL_URL = '/models'
+                    var log2 = document.getElementById('log2');
+                    log2.textContent = arrLog[1];
+                    console.log("Loading Models");
+                    
+                    await faceapi.loadSsdMobilenetv1Model(MODEL_URL)
+                    var log3 = document.getElementById('log3');
+                    log3.textContent = arrLog[2];
+                    console.log("Loading SsdMobilenetv1Model");
+                    await faceapi.loadFaceLandmarkModel(MODEL_URL)
+                    var log4 = document.getElementById('log4');
+                    log4.textContent = arrLog[3];
+                    console.log("Loading FaceLandmarkModel");
+                    await faceapi.loadFaceRecognitionModel(MODEL_URL)
+                    var log5 = document.getElementById('log5');
+                    log5.textContent = arrLog[4];
+                    console.log("Loading FaceRecognitionModel");
+
+                    const img= document.getElementById('refimg')
+                    var log6 = document.getElementById('log6');
+                    log6.textContent = arrLog[5];
+                    console.log("Getting Facial Image");
+                    let fullFaceDescriptions = await faceapi.detectAllFaces(img).withFaceLandmarks().withFaceDescriptors()
+                    var log7 = document.getElementById('log7');
+                    log7.textContent = arrLog[6];
+                    console.log("Getting Face Descriptions");
+                    const canvas = $('#reflay').get(0)
+                    faceapi.matchDimensions(canvas, img)
+                    var log8 = document.getElementById('log8');
+                    log8.textContent = arrLog[7];
+                    console.log("Matching Dimesions");
+                    
+                    fullFaceDescriptions = faceapi.resizeResults(fullFaceDescriptions, img)
+                    faceapi.draw.drawDetections(canvas, fullFaceDescriptions)
+                    // faceapi.draw.drawFaceLandmarks(canvas, fullFaceDescriptions)
+
+
+                    
+                    console.log(fullFaceDescriptions[0].landmarks)
+
+                    
+                    const labels = userList;
+
+                    const labeledFaceDescriptors = await Promise.all(
+                        labels.map(async label => {
+                            // fetch image data from urls and convert blob to HTMLImage element
+                            const imgUrl = `img/${label}.jpeg`
+                            const img = await faceapi.fetchImage(imgUrl)
+                            
+                            // detect the face with the highest score in the image and compute it's landmarks and face descriptor
+                            const fullFaceDescription = await faceapi.detectSingleFace(img).withFaceLandmarks().withFaceDescriptor()
+                            
+                            if (!fullFaceDescription) {
+                            throw new Error(`no faces detected for ${label}`)
+                            }
+                            
+                            const faceDescriptors = [fullFaceDescription.descriptor]
+                            return new faceapi.LabeledFaceDescriptors(label, faceDescriptors)
+                        })
+                    );
+
+                    const maxDescriptorDistance = 0.6
+                    var log9 = document.getElementById('log9');
+                    log9.textContent = arrLog[8];
+                    console.log("Matching faces");
+                    const faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, maxDescriptorDistance)
+                    var log10 = document.getElementById('log10');
+                    log10.textContent = arrLog[9];
+console.log("Getting Results");
+                    const results = fullFaceDescriptions.map(fd => faceMatcher.findBestMatch(fd.descriptor))
+
+                        if (results.length > 1){
+                            var r = "Multiple Faces"
+                            localStorage.setItem("reason", r);
+                            window.location.href = "/failure.html";
+                            console.log("Multiple Faces")
+                        }else{
+                            console.log(results[0].label);
+                            localStorage.setItem("user", results[0].label);
+                            window.location.href = "/success.html";
+                            
+
+                    results.forEach((bestMatch, i) => {
+                        const box = fullFaceDescriptions[i].detection.box
+                        const text = bestMatch.toString()
+                        const drawBox = new faceapi.draw.DrawBox(box, { label: text })
+                        drawBox.draw(canvas)
+                    }) 
+                        }
+                  
+
+                    console.log(img);
+                }
+              var imgData = localStorage.getItem('imgData');
+authImg = document.getElementById('refimg');
+authImg.src = imgData;
+                face()
+            })
+
+           
+        </script>
+    </body>
+</html>

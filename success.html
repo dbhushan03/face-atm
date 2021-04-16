@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face ATM</title>
+</head>
+<style>
+    .center{
+        margin: auto;
+  width: 60%;
+  border: 3px solid #73AD21;
+  padding: 10px;
+    }
+  
+</style>
+<body>
+    
+<div class="center">
+ <h1>   <span id="titleAtm"></span></h1>
+ <h2>
+     <span id="response"></span><br>
+     <span id="oldBalance"></span><br>
+     <span id="currentBalance"></span><br>
+     <span id="transactions"></span>
+ </h2>
+
+</div>
+
+    <script>
+        let user = localStorage.getItem("user");
+        let withdrawl = localStorage.getItem("withdrawl")
+
+      
+       let dataRes;
+        if (user != "unknown" || !user || user != null){
+            let url =  "https://withdrawl.face-atm.workers.dev/" + "?user="+user+"&withdrawl="+withdrawl;
+
+            getData(url)
+            
+        }
+            async function getData(url){
+            await fetch(url)
+  .then(response => response.json())
+  .then(data => dataRes = data );
+
+  document.getElementById("titleAtm").textContent = "Welcome, " + user;
+  document.getElementById("response").textContent =  dataRes.response;
+
+  if (dataRes.response != "Insufficient Balance"){
+  document.getElementById("oldBalance").textContent = "Balance Before: "+ dataRes.oldBalance;
+  document.getElementById("currentBalance").textContent = "Current Balance: "+dataRes.newBalance;
+  let tl = dataRes.transactions.length;
+
+document.getElementById("transactions").textContent = "Last 5 Transactions: " + dataRes.transactions[tl-1]+"," + dataRes.transactions[tl-2]+"," + dataRes.transactions[tl-3]+"," + dataRes.transactions[tl-4]+"," + dataRes.transactions[tl-5];
+localStorage.clear();
+  }
+  else{
+    document.getElementById("oldBalance").textContent = "Balance : "+ dataRes.balance;
+    localStorage.clear();
+  }
+              }
+            
+
+        
+    </script>
+</body>
+</html>
